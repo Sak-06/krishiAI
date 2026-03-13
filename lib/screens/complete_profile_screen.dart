@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 
+import '../localization/app_translations.dart';
 import 'farmer_dashboard.dart';
 import 'buyer_dashboard.dart';
 
@@ -197,7 +198,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Complete Your Profile'),
+        title: Text(AppTranslations.text(context, 'logout')) ,
         backgroundColor: Colors.green,
         elevation: 0,
       ),
@@ -207,8 +208,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            const Text(
-              "Let's set up your profile",
+             Text(AppTranslations.text(context, 'profilesetup'),
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -216,8 +216,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              "Complete your profile to get started with KrashiAI",
+            Text(AppTranslations.text(context, 'complete_your_profile'),
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey.shade600,

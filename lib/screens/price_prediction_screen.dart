@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 import '../services/ai_services.dart';
 
 class PricePredictionScreen extends StatefulWidget {
@@ -9,6 +13,11 @@ class PricePredictionScreen extends StatefulWidget {
 }
 
 class _PricePredictionScreenState extends State<PricePredictionScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _getPricePrediction();
+  }
   final List<String> crops = [
     'Tomato', 'Potato', 'Onion', 'Carrot', 'Wheat', 'Rice',
     'Spinach', 'Cauliflower', 'Cabbage', 'Brinjal', 'Chilli'

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:krashi_ai/localization/app_translations.dart';
 
+import '../main.dart';
+import 'login_screen.dart';
 import 'smart_listing_screen.dart';
 import 'price_prediction_screen.dart';
 import 'crop_analysis_screen.dart';
+// import 'chatbot_screen.dart'; // add later
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({Key? key}) : super(key: key);
@@ -21,377 +24,307 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
   final TextEditingController _productController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    _initializeServices();
-  }
-
-  Future<void> _initializeServices() async {
-    await dotenv.load();
-  }
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     final user = _auth.currentUser;
 
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: Text("Not logged in")),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.green.shade700,
-        title: const Text("Farmer Dashboard"),
+        title: Text(AppTranslations.text(context,'farmer_dashboard')),
         actions: [
-          // AI Tools Menu
+          // 🌍 Language Selector
           PopupMenuButton<String>(
-            icon: const Icon(Icons.auto_awesome),
+            icon: const Icon(Icons.language),
             onSelected: (value) {
-              switch (value) {
-                case 'price_prediction':
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => PricePredictionScreen()),
-                  );
-                  break;
-                case 'crop_analysis':
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => CropAnalysisScreen()),
-                  );
-                  break;
+              if (value == 'en') {
+                DirectMarketApp.of(context)
+                    ?.setLocale(const Locale('en'));
+              } else {
+                DirectMarketApp.of(context)
+                    ?.setLocale(const Locale('hi'));
               }
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'price_prediction',
-                child: Row(
-                  children: [
-                    Icon(Icons.attach_money, color: Colors.green),
-                    SizedBox(width: 8),
-                    Text('Price Prediction'),
-                  ],
-                ),
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'en',
+                child: Text("English"),
               ),
-              const PopupMenuItem(
-                value: 'crop_analysis',
-                child: Row(
-                  children: [
-                    Icon(Icons.photo_camera, color: Colors.blue),
-                    SizedBox(width: 8),
-                    Text('Crop Analysis'),
-                  ],
-                ),
+              PopupMenuItem(
+                value: 'hi',
+                child: Text("हिंदी"),
               ),
             ],
           ),
+
+          // 💬 Message Icon (if you added chat list)
+          /// 💬 Messages (future negotiation/chat)
+          IconButton(
+            icon: const Icon(Icons.message),
+            onPressed: () {
+              Navigator.pushNamed(context, '/chat');
+            },
+          ),
+
+          /// 🚪 Logout
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await _auth.signOut();
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-      backgroundColor: Colors.green.shade50,
-      body: Column(
-        children: [
-          // AI Features Quick Access
-          _buildAIFeaturesSection(),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore
-                  .collection('products')
-                  .where('farmerId', isEqualTo: user?.uid)
-                  .orderBy('timestamp', descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final products = snapshot.data?.docs ?? [];
-
-                if (products.isEmpty) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.inventory_2, size: 80, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text(
-                          "No products listed yet.\nUse Smart Listing to add your first product!",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16, color: Colors.black54),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: products.length,
-                  itemBuilder: (context, index) {
-                    final product = products[index];
-                    return _buildProductCard(product);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          // Smart Listing FAB
-          FloatingActionButton(
-            heroTag: "smart_listing",
-            backgroundColor: Colors.blue,
-            onPressed: () {
-              Navigator.push(
+              if (!context.mounted) return;
+              Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => SmartListingScreen()),
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    (_) => false,
               );
             },
-            child: const Icon(Icons.auto_awesome, color: Colors.white),
           ),
-          const SizedBox(height: 16),
-          // Traditional Add Product FAB
-          FloatingActionButton.extended(
-            heroTag: "add_product",
-            backgroundColor: Colors.green.shade700,
-            icon: const Icon(Icons.add),
-            label: const Text("Add Product"),
-            onPressed: () => _showAddProductDialog(context),
+        ],
+      ),
+
+      backgroundColor: Colors.green.shade50,
+
+      body: _currentIndex == 0
+          ? _buildDashboard(user)
+          : _buildBottomPage(),
+
+      floatingActionButton: _currentIndex == 0
+          ? FloatingActionButton.extended(
+        backgroundColor: Colors.green.shade700,
+        icon: const Icon(Icons.add),
+        label: Text(AppTranslations.text(context, 'add_product')),
+        onPressed: () => _showAddProductDialog(context),
+      )
+          : null,
+
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        selectedItemColor: Colors.green.shade700,
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) => setState(() => _currentIndex = index),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: "Dashboard",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.auto_awesome),
+            label: "Smart List",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.attach_money),
+            label: "Price AI",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.agriculture),
+            label: "Crop AI",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.smart_toy),
+            label: "Chat AI",
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAIFeaturesSection() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "AI-Powered Tools",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.green,
+  // ================= DASHBOARD =================
+
+  Widget _buildDashboard(User user) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore
+          .collection('products')
+          .where('farmerId', isEqualTo: user.uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final products = snapshot.data?.docs ?? [];
+
+        if (products.isEmpty) {
+          return const Center(
+            child: Text(
+              "No products listed yet.\nAdd your first product!",
+              textAlign: TextAlign.center,
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildAIFeatureButton(
-                  icon: Icons.auto_awesome,
-                  title: "Smart Listing",
-                  subtitle: "AI-assisted product listing",
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => SmartListingScreen()),
-                    );
-                  },
-                  color: Colors.blue,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildAIFeatureButton(
-                  icon: Icons.attach_money,
-                  title: "Price Predict",
-                  subtitle: "Get optimal pricing",
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => PricePredictionScreen()),
-                    );
-                  },
-                  color: Colors.orange,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: products.length,
+          itemBuilder: (_, index) => _buildProductCard(products[index]),
+        );
+      },
     );
   }
 
-  Widget _buildAIFeatureButton({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    required Color color,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 24, color: color),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 10,
-                color: color.withOpacity(0.7),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // ================= PRODUCT CARD =================
 
   Widget _buildProductCard(DocumentSnapshot product) {
-    final hasAISuggestion = product['ai_suggested_price'] != null;
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore
+          .collection('products')
+          .doc(product.id)
+          .collection('offers')
+          .snapshots(),
+      builder: (context, snapshot) {
+        final offerCount = snapshot.data?.docs.length ?? 0;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 6,
-            offset: Offset(0, 3),
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          child: ListTile(
+            leading: const Icon(Icons.local_florist, color: Colors.green),
+            title: Text(
+              product['name'] ?? 'Unnamed',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text("₹${product['price']} per kg"),
+            trailing: Chip(
+              label: Text("$offerCount Offers"),
+              backgroundColor: offerCount > 0
+                  ? Colors.orange.shade100
+                  : Colors.grey.shade300,
+            ),
+            onTap: () => _openOffersSheet(product.id),
           ),
-        ],
-      ),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: hasAISuggestion ? Colors.blue.shade100 : Colors.green.shade100,
-          child: Icon(
-            hasAISuggestion ? Icons.auto_awesome : Icons.local_florist,
-            color: hasAISuggestion ? Colors.blue : Colors.green,
-          ),
-        ),
-        title: Text(
-          product['name'],
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("₹${product['price']} per kg"),
-            if (hasAISuggestion)
-              Text(
-                "AI Suggested: ₹${product['ai_suggested_price']}",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.blue,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-          ],
-        ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete, color: Colors.red),
-          onPressed: () async {
-            await _firestore
-                .collection('products')
-                .doc(product.id)
-                .delete();
-          },
-        ),
-      ),
+        );
+      },
     );
   }
+
+  // ================= OFFERS BOTTOM SHEET =================
+
+  void _openOffersSheet(String productId) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        return StreamBuilder<QuerySnapshot>(
+          stream: _firestore
+              .collection('products')
+              .doc(productId)
+              .collection('offers')
+              .orderBy('timestamp', descending: true)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final offers = snapshot.data?.docs ?? [];
+
+            if (offers.isEmpty) {
+              return const Center(child: Text("No offers yet"));
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: offers.length,
+              itemBuilder: (_, index) {
+                final offer = offers[index];
+                return Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.person),
+                    title: Text(offer['buyerName'] ?? 'Buyer'),
+                    subtitle:
+                    Text("Offered ₹${offer['offeredPrice']} per kg"),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ================= ADD PRODUCT =================
 
   void _showAddProductDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Add New Product"),
+      builder: (_) => AlertDialog(
+        title: const Text("Add Product"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _productController,
-              decoration: const InputDecoration(
-                labelText: "Product Name",
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(labelText: "Product Name"),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             TextField(
               controller: _priceController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Price per kg",
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(labelText: "Price per kg"),
             ),
           ],
         ),
         actions: [
           TextButton(
-            child: const Text("Cancel"),
             onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
-            ),
-            child: const Text("Save"),
             onPressed: () async {
               final name = _productController.text.trim();
               final price = _priceController.text.trim();
 
-              if (name.isNotEmpty && price.isNotEmpty) {
-                await _firestore.collection('products').add({
-                  'name': name,
-                  'price': double.parse(price),
-                  'farmerId': _auth.currentUser?.uid,
-                  'timestamp': FieldValue.serverTimestamp(),
-                  'category': 'General',
-                  'quality': 'Medium',
-                });
-                _productController.clear();
-                _priceController.clear();
-                Navigator.pop(context);
-              }
+              if (name.isEmpty || price.isEmpty) return;
+
+              await _firestore.collection('products').add({
+                'name': name,
+                'price': double.tryParse(price) ?? 0,
+                'farmerId': _auth.currentUser!.uid,
+                // ✅ FIX: local timestamp (no disappearing)
+                'timestamp': Timestamp.now(),
+              });
+
+              _productController.clear();
+              _priceController.clear();
+              Navigator.pop(context);
             },
+            child: const Text("Save"),
           ),
         ],
       ),
     );
+  }
+
+  // ================= BOTTOM NAV PAGES =================
+
+  Widget _buildBottomPage() {
+    switch (_currentIndex) {
+      case 1:
+        return const SmartListingScreen();
+      case 2:
+        return const PricePredictionScreen();
+      //case 3:
+        return const CropAnalysisScreen();
+      case 4:
+        return const Center(child: Text("AI Chatbot Coming Soon"));
+      default:
+        return const SizedBox();
+    }
   }
 }

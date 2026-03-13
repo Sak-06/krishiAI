@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../services/ai_services.dart';
@@ -624,3 +628,4 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
     super.dispose();
   }
 }// TODO Implement this library.
+

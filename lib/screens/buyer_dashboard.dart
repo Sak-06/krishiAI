@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../localization/app_translations.dart';
+import '../main.dart';
+import 'login_screen.dart';
+
 class BuyerDashboard extends StatelessWidget {
   const BuyerDashboard({Key? key}) : super(key: key);
 
@@ -12,14 +16,47 @@ class BuyerDashboard extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.green.shade700,
-        title: const Text("Buyer Dashboard"),
+        title: Text(
+          AppTranslations.text(context, 'buyer_dashboard'),
+        ),
         actions: [
+          // 🌍 Language Selector
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.language),
+            onSelected: (value) {
+              if (value == 'en') {
+                DirectMarketApp.of(context)
+                    ?.setLocale(const Locale('en'));
+              } else {
+                DirectMarketApp.of(context)
+                    ?.setLocale(const Locale('hi'));
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'en',
+                child: Text("English"),
+              ),
+              PopupMenuItem(
+                value: 'hi',
+                child: Text("हिंदी"),
+              ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              Navigator.pop(context);
-            },
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+
+                if (!context.mounted) return;
+
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false, // removes ALL previous routes
+                );
+              },
+
           ),
         ],
       ),
@@ -42,7 +79,7 @@ class BuyerDashboard extends StatelessWidget {
           final products = snapshot.data?.docs ?? [];
 
           if (products.isEmpty) {
-            return _buildEmptyState();
+            return _buildEmptyState(context);
           }
 
           return _buildProductGrid(products, context);
@@ -62,40 +99,43 @@ class BuyerDashboard extends StatelessWidget {
             color: Colors.red,
           ),
           const SizedBox(height: 16),
-          const Text(
-            "Connection Issue",
+          Text(
+            AppTranslations.text(context, 'connection issue'),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.red,
             ),
           ),
+
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32.0),
+
             child: Text(
-              "Unable to load products. Please check your connection and try again.",
+              AppTranslations.text(context, 'Unable to load products. Please check your connection and try again.'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey.shade600,
               ),
             ),
+
           ),
           const SizedBox(height: 20),
           ElevatedButton(
             onPressed: () {
               // Retry loading
             },
-            child: const Text("Retry"),
+            child: Text(AppTranslations.text(context,"Retry")),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return const Center(
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -106,13 +146,13 @@ class BuyerDashboard extends StatelessWidget {
           ),
           SizedBox(height: 16),
           Text(
-            "No products available yet.",
-            style: TextStyle(fontSize: 18, color: Colors.black54),
+            AppTranslations.text(context,'no_products'),
+            style: const TextStyle(fontSize: 18, color: Colors.black54),
           ),
           SizedBox(height: 8),
           Text(
-            "Check back later for farmer listings.",
-            style: TextStyle(fontSize: 14, color: Colors.grey),
+            AppTranslations.text(context,'check_back,later'),
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
           ),
         ],
       ),
@@ -175,10 +215,23 @@ class BuyerDashboard extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(
-                            "Offer sent to seller for ${productData['name']}!")));
+                  onPressed: () async {
+                    final user = FirebaseAuth.instance.currentUser;
+
+                    await FirebaseFirestore.instance
+                        .collection('products')
+                        .doc(product.id)
+                        .collection('offers')
+                        .add({
+                      'buyerId': user!.uid,
+                      'buyerName': user.displayName ?? 'Buyer',
+                      'offeredPrice': productData['price'],
+                      'timestamp': FieldValue.serverTimestamp(),
+                    });
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Offer sent successfully"))
+                    );
                   },
                   child: const Text("Send Offer"),
                 ),
