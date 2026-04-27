@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:krashi_ai/widgets/translated_text.dart';
 import 'dart:io';
 import '../services/ai_services.dart';
 
@@ -135,7 +136,7 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
                         strokeWidth: 3,
                       ),
                       SizedBox(height: 20),
-                      Text(
+                      TranslatedText(
                         'Analyzing Crop...',
                         style: TextStyle(
                           color: Colors.white,
@@ -144,7 +145,7 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
                         ),
                       ),
                       SizedBox(height: 8),
-                      Text(
+                      TranslatedText(
                         'AI is examining your crop image',
                         style: TextStyle(
                           color: Colors.white70,
@@ -190,7 +191,7 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
             children: [
               const Icon(Icons.warning_amber, size: 48, color: Colors.orange),
               const SizedBox(height: 16),
-              const Text(
+              const TranslatedText(
                 'No Crop Detected',
                 style: TextStyle(
                   fontSize: 20,
@@ -230,7 +231,7 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
+                TranslatedText(
                   'Crop Identified',
                   style: TextStyle(
                     fontSize: 16,
@@ -250,7 +251,7 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                const TranslatedText(
                   'Analysis Details',
                   style: TextStyle(
                     fontSize: 18,
@@ -322,10 +323,10 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
       'high': {
         'color': Colors.green,
         'tips': [
-          'Excellent quality crop',
-          'Suitable for premium markets',
-          'Good shelf life expected',
-          'High market value'
+          TranslatedText('Excellent quality crop'),
+          TranslatedText('Suitable for premium markets'),
+          TranslatedText('Good shelf life expected'),
+          TranslatedText('High market value')
         ],
       },
       'medium': {
@@ -361,7 +362,7 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
               children: [
                 Icon(Icons.lightbulb_outline, color: tips['color']),
                 const SizedBox(width: 8),
-                Text(
+                TranslatedText(
                   'Quality Insights',
                   style: TextStyle(
                     fontSize: 18,
@@ -417,7 +418,7 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
           child: ElevatedButton.icon(
             onPressed: _pickImageFromCamera,
             icon: const Icon(Icons.camera_alt),
-            label: const Text(
+            label: const TranslatedText(
               'Take Photo with Camera',
               style: TextStyle(fontSize: 16),
             ),
@@ -433,7 +434,7 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
           child: OutlinedButton.icon(
             onPressed: _pickImageFromGallery,
             icon: const Icon(Icons.photo_library),
-            label: const Text(
+            label: const TranslatedText(
               'Choose from Gallery',
               style: TextStyle(fontSize: 16),
             ),
@@ -451,7 +452,7 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Crop Analysis'),
+        title: const TranslatedText('Crop Analysis'),
         backgroundColor: Colors.green,
         actions: [
           if (_selectedImage != null)
@@ -469,7 +470,7 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
-              const Text(
+              const TranslatedText(
                 'AI-Powered Crop Analysis',
                 style: TextStyle(
                   fontSize: 24,
@@ -477,7 +478,7 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              const TranslatedText(
                 'Take a photo of your crop to get instant analysis including crop identification, quality assessment, and market insights.',
                 style: TextStyle(
                   fontSize: 16,
@@ -504,7 +505,7 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
                         children: [
                           Icon(Icons.photo_camera, size: 64, color: Colors.grey),
                           SizedBox(height: 16),
-                          Text(
+                          TranslatedText(
                             'No image selected',
                             style: TextStyle(color: Colors.grey),
                           ),
@@ -549,7 +550,7 @@ class _CropAnalysisScreenState extends State<CropAnalysisScreen> {
               // Tips Section
               if (_selectedImage == null) ...[
                 const SizedBox(height: 40),
-                const Text(
+                const TranslatedText(
                   'Tips for Best Results:',
                   style: TextStyle(
                     fontSize: 18,

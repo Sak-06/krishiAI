@@ -1,9 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
 import '../services/ai_services.dart';
+import '../widgets/translated_text.dart';
 
 class PricePredictionScreen extends StatefulWidget {
   const PricePredictionScreen({Key? key}) : super(key: key);
@@ -13,21 +10,23 @@ class PricePredictionScreen extends StatefulWidget {
 }
 
 class _PricePredictionScreenState extends State<PricePredictionScreen> {
+
   @override
   void initState() {
     super.initState();
     _getPricePrediction();
   }
+
   final List<String> crops = [
-    'Tomato', 'Potato', 'Onion', 'Carrot', 'Wheat', 'Rice',
-    'Spinach', 'Cauliflower', 'Cabbage', 'Brinjal', 'Chilli'
+    'Tomato','Potato','Onion','Carrot','Wheat','Rice',
+    'Spinach','Cauliflower','Cabbage','Brinjal','Chilli'
   ];
 
   final List<String> locations = [
-    'Punjab', 'Haryana', 'Uttar Pradesh', 'Maharashtra', 'Karnataka'
+    'Punjab','Haryana','Uttar Pradesh','Maharashtra','Karnataka'
   ];
 
-  final List<String> qualities = ['Low', 'Medium', 'High', 'Organic'];
+  final List<String> qualities = ['Low','Medium','High','Organic'];
 
   String _selectedCrop = 'Tomato';
   String _selectedLocation = 'Punjab';
@@ -56,9 +55,11 @@ class _PricePredictionScreenState extends State<PricePredictionScreen> {
         _isLoading = false;
       });
     } catch (e) {
+
       setState(() {
         _isLoading = false;
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Prediction failed: $e'),
@@ -70,21 +71,27 @@ class _PricePredictionScreenState extends State<PricePredictionScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Price Prediction'),
+        title: const TranslatedText('AI Price Prediction'),
         backgroundColor: Colors.orange,
       ),
+
       body: Padding(
         padding: const EdgeInsets.all(16.0),
+
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+
             children: [
-              const Text(
+
+              const TranslatedText(
                 'Get AI-powered price suggestions for your crops',
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
+
               const SizedBox(height: 24),
 
               // Crop Selection
@@ -94,6 +101,7 @@ class _PricePredictionScreenState extends State<PricePredictionScreen> {
                 items: crops,
                 onChanged: (value) => setState(() => _selectedCrop = value!),
               ),
+
               const SizedBox(height: 16),
 
               // Location Selection
@@ -103,6 +111,7 @@ class _PricePredictionScreenState extends State<PricePredictionScreen> {
                 items: locations,
                 onChanged: (value) => setState(() => _selectedLocation = value!),
               ),
+
               const SizedBox(height: 16),
 
               // Quality Selection
@@ -112,14 +121,15 @@ class _PricePredictionScreenState extends State<PricePredictionScreen> {
                 items: qualities,
                 onChanged: (value) => setState(() => _selectedQuality = value!),
               ),
+
               const SizedBox(height: 16),
 
               // Quantity Input
               TextField(
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Quantity (kg)',
-                  border: const OutlineInputBorder(),
+                  border: OutlineInputBorder(),
                   suffixText: 'kg',
                 ),
                 onChanged: (value) {
@@ -128,33 +138,38 @@ class _PricePredictionScreenState extends State<PricePredictionScreen> {
                   });
                 },
               ),
+
               const SizedBox(height: 32),
 
               // Predict Button
               SizedBox(
                 width: double.infinity,
+
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _getPricePrediction,
+
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
+
                   child: _isLoading
                       ? const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                      : const Text(
+                      : const TranslatedText(
                     'Get Price Prediction',
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
               ),
+
               const SizedBox(height: 32),
 
-              // Results
-              if (_pricePrediction != null) _buildPriceResults(),
+              if (_pricePrediction != null)
+                _buildPriceResults(),
             ],
           ),
         ),
@@ -168,32 +183,46 @@ class _PricePredictionScreenState extends State<PricePredictionScreen> {
     required List<String> items,
     required Function(String?) onChanged,
   }) {
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+
       children: [
-        Text(
+
+        TranslatedText(
           label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14),
         ),
+
         const SizedBox(height: 8),
+
         Container(
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey),
             borderRadius: BorderRadius.circular(4),
           ),
+
           child: DropdownButtonHideUnderline(
+
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
+
               items: items.map((String item) {
+
                 return DropdownMenuItem<String>(
                   value: item,
+
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(item),
+                    child: TranslatedText(item),
                   ),
                 );
+
               }).toList(),
+
               onChanged: onChanged,
             ),
           ),
@@ -203,28 +232,44 @@ class _PricePredictionScreenState extends State<PricePredictionScreen> {
   }
 
   Widget _buildPriceResults() {
-    final suggestedPrice = _pricePrediction!['suggested_price']?.toDouble() ?? 0.0;
-    final minPrice = _pricePrediction!['min_price']?.toDouble() ?? 0.0;
-    final maxPrice = _pricePrediction!['max_price']?.toDouble() ?? 0.0;
-    final marketAvg = _pricePrediction!['market_avg']?.toDouble() ?? 0.0;
-    final confidence = _pricePrediction!['confidence']?.toDouble() ?? 0.0;
+
+    final suggestedPrice =
+        _pricePrediction!['suggested_price']?.toDouble() ?? 0.0;
+
+    final minPrice =
+        _pricePrediction!['min_price']?.toDouble() ?? 0.0;
+
+    final maxPrice =
+        _pricePrediction!['max_price']?.toDouble() ?? 0.0;
+
+    final marketAvg =
+        _pricePrediction!['market_avg']?.toDouble() ?? 0.0;
+
+    final confidence =
+        _pricePrediction!['confidence']?.toDouble() ?? 0.0;
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+
           children: [
-            const Text(
+
+            const TranslatedText(
               'AI Price Prediction Results',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold),
             ),
+
             const SizedBox(height: 16),
 
-            // Suggested Price
             Center(
               child: Column(
                 children: [
+
                   Text(
                     '₹${suggestedPrice.toStringAsFixed(2)}/kg',
                     style: const TextStyle(
@@ -233,64 +278,95 @@ class _PricePredictionScreenState extends State<PricePredictionScreen> {
                       color: Colors.green,
                     ),
                   ),
+
                   const SizedBox(height: 8),
-                  const Text(
+
+                  const TranslatedText(
                     'AI Suggested Price',
                     style: TextStyle(color: Colors.grey),
                   ),
                 ],
               ),
             ),
+
             const SizedBox(height: 24),
 
-            // Price Range
-            _buildPriceRangeItem('Minimum Price', minPrice, Colors.red),
-            _buildPriceRangeItem('Maximum Price', maxPrice, Colors.green),
+            _buildPriceRangeItem(
+                'Minimum Price',
+                minPrice,
+                Colors.red),
+
+            _buildPriceRangeItem(
+                'Maximum Price',
+                maxPrice,
+                Colors.green),
+
             const SizedBox(height: 16),
 
-            // Market Comparison
             Row(
               children: [
+
                 Icon(
-                  suggestedPrice > marketAvg ?
-                  Icons.arrow_upward : Icons.arrow_downward,
-                  color: suggestedPrice > marketAvg ? Colors.green : Colors.red,
+                  suggestedPrice > marketAvg
+                      ? Icons.arrow_upward
+                      : Icons.arrow_downward,
+                  color: suggestedPrice > marketAvg
+                      ? Colors.green
+                      : Colors.red,
                 ),
+
                 const SizedBox(width: 8),
+
                 Expanded(
-                  child: Text(
+                  child: TranslatedText(
                     'Your price is ${suggestedPrice > marketAvg ? 'above' : 'below'} '
                         'market average (₹${marketAvg.toStringAsFixed(2)})',
                   ),
                 ),
               ],
             ),
+
             const SizedBox(height: 16),
 
-            // Confidence
             LinearProgressIndicator(
               value: confidence,
               backgroundColor: Colors.grey[300],
+
               valueColor: AlwaysStoppedAnimation<Color>(
-                confidence > 0.7 ? Colors.green :
-                confidence > 0.4 ? Colors.orange : Colors.red,
+                confidence > 0.7
+                    ? Colors.green
+                    : confidence > 0.4
+                    ? Colors.orange
+                    : Colors.red,
               ),
             ),
+
             const SizedBox(height: 8),
-            Text('Confidence: ${(confidence * 100).toStringAsFixed(1)}%'),
+
+            TranslatedText(
+              'Confidence: ${(confidence * 100).toStringAsFixed(1)}%',
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPriceRangeItem(String label, double price, Color color) {
+  Widget _buildPriceRangeItem(
+      String label,
+      double price,
+      Color color) {
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
+
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
         children: [
-          Text(label),
+
+          TranslatedText(label),
+
           Text(
             '₹${price.toStringAsFixed(2)}',
             style: TextStyle(
@@ -302,4 +378,4 @@ class _PricePredictionScreenState extends State<PricePredictionScreen> {
       ),
     );
   }
-}// TODO Implement this library.
+}

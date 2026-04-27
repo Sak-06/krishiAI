@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:krashi_ai/widgets/translated_text.dart';
 import 'dart:io';
 
 import '../services/ai_services.dart';
@@ -119,14 +120,14 @@ class _SmartListingScreenState extends State<SmartListingScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Crop Identified!'),
+        title: const TranslatedText('Crop Identified!'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Crop: ${result['identifiedCrop']}'),
-            Text('Confidence: ${(result['confidence'] * 100).toStringAsFixed(1)}%'),
-            Text('Quality: ${result['quality']}'),
+            TranslatedText('Crop: ${result['identifiedCrop']}'),
+            TranslatedText('Confidence: ${(result['confidence'] * 100).toStringAsFixed(1)}%'),
+            TranslatedText('Quality: ${result['quality']}'),
           ],
         ),
         actions: [
@@ -188,7 +189,7 @@ class _SmartListingScreenState extends State<SmartListingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Smart Product Listing'),
+        title: const TranslatedText('Smart Product Listing'),
         backgroundColor: Colors.blue,
         actions: [
           IconButton(
@@ -229,7 +230,7 @@ class _SmartListingScreenState extends State<SmartListingScreen> {
                                 children: [
                                   CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
                                   SizedBox(height: 16),
-                                  Text(
+                                  TranslatedText(
                                     'AI is analyzing your crop...',
                                     style: TextStyle(color: Colors.white),
                                   ),
@@ -292,7 +293,7 @@ class _SmartListingScreenState extends State<SmartListingScreen> {
                     children: [
                       const Icon(Icons.auto_awesome, size: 16, color: Colors.green),
                       const SizedBox(width: 8),
-                      Text(
+                      TranslatedText(
                         'AI Suggested: ₹${_suggestedPrice!.toStringAsFixed(2)}/kg',
                         style: const TextStyle(color: Colors.green),
                       ),
@@ -333,7 +334,7 @@ class _SmartListingScreenState extends State<SmartListingScreen> {
                     backgroundColor: Colors.blue,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text(
+                  child: const TranslatedText(
                     'List Product with AI',
                     style: TextStyle(fontSize: 16),
                   ),
@@ -346,7 +347,7 @@ class _SmartListingScreenState extends State<SmartListingScreen> {
                 OutlinedButton.icon(
                   onPressed: _pickImage,
                   icon: const Icon(Icons.photo_camera),
-                  label: const Text('Use Camera for AI Analysis'),
+                  label: const TranslatedText('Use Camera for AI Analysis'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),

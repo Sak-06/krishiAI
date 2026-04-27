@@ -3,9 +3,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:krashi_ai/widgets/translated_text.dart';
 import 'dart:io';
 
-import '../localization/app_translations.dart';
+
 import 'farmer_dashboard.dart';
 import 'buyer_dashboard.dart';
 
@@ -198,7 +199,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppTranslations.text(context, 'logout')) ,
+        title: TranslatedText("Log Out") ,
         backgroundColor: Colors.green,
         elevation: 0,
       ),
@@ -208,7 +209,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-             Text(AppTranslations.text(context, 'profilesetup'),
+             TranslatedText("Please Set up your profile",
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -216,7 +217,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Text(AppTranslations.text(context, 'complete_your_profile'),
+            Text("complete your profile",
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey.shade600,
